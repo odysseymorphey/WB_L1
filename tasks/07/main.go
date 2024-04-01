@@ -62,7 +62,8 @@ func main() {
 	close(ch)
 	wg.Wait()
 
-	for k, v := range m.m {
-		fmt.Println(k, v)
+	for k := range m.m {
+		fmt.Print(k, " ")
+		fmt.Println(m.Load(k))
 	}
 }
