@@ -1,43 +1,68 @@
 package main
 
-import "fmt"
+import (
+	"encoding/json"
+	"encoding/xml"
+	"fmt"
+)
 
-type USB_C interface {
-	PlugIn()
+// Структура данных в формате JSON
+type EmployeeJSON struct {
+	Name     string `json:"name"`
+	Position string `json:"position"`
 }
 
-type USB_A interface {
-	Plug(device USB_C)
+// Структура данных в формате XML
+type EmployeeXML struct {
+	Name     string `xml:"name"`
+	Position string `xml:"position"`
 }
 
-type micron_USB_C struct{}
-
-func (m *micron_USB_C) PlugIn() {
-	fmt.Println("Device connected")
+// Адаптер для преобразования данных из JSON в XML
+type JSONToXMLAdapter struct {
+	Employee EmployeeJSON
 }
 
-type hp_USB_A struct{}
+// Метод для преобразования данных из JSON в XML
+func (a *JSONToXMLAdapter) ConvertToXML() (string, error) {
+	// Преобразуем данные из JSON в XML
+	employeeXML := EmployeeXML{
+		Name:     a.Employee.Name,
+		Position: a.Employee.Position,
+	}
 
-func (h *hp_USB_A) Plug(device USB_C) {
-	fmt.Println("Connected")
-	device.PlugIn()
-	fmt.Println("Disconnected")
-}
+	// Кодируем данные в формате XML
+	xmlData, err := xml.Marshal(employeeXML)
+	if err != nil {
+		return "", err
+	}
 
-type C_to_A struct {
-	device USB_C
-}
-
-func (c *C_to_A) PlugIn() {
-	c.device.PlugIn()
+	return string(xmlData), nil
 }
 
 func main() {
-	device := micron_USB_C{}
+	// Данные о работнике в формате JSON
+	jsonData := `{"name": "John Doe", "position": "Developer"}`
 
-	socket := hp_USB_A{}
+	// Распаковываем данные JSON
+	var employeeJSON EmployeeJSON
+	err := json.Unmarshal([]byte(jsonData), &employeeJSON)
+	if err != nil {
+		fmt.Println("Ошибка при распаковке данных JSON:", err)
+		return
+	}
 
-	adapter := &C_to_A{device: &device}
+	// Создаем адаптер
+	adapter := JSONToXMLAdapter{Employee: employeeJSON}
 
-	socket.Plug(adapter)
+	// Преобразуем данные из JSON в XML
+	xmlData, err := adapter.ConvertToXML()
+	if err != nil {
+		fmt.Println("Ошибка при преобразовании данных из JSON в XML:", err)
+		return
+	}
+
+	// Выводим данные в формате XML
+	fmt.Println("Данные в формате XML:")
+	fmt.Println(xmlData)
 }

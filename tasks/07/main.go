@@ -16,6 +16,8 @@ func NewConcMap() *ConcMap {
 	}
 }
 
+// Берем значение из мапы
+// Блокируем чтение для других горутини с помощью функции RLock()
 func (c *ConcMap) Load(key string) (int, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -24,6 +26,8 @@ func (c *ConcMap) Load(key string) (int, bool) {
 	return val, ok
 }
 
+// Записываем в мапу
+// Блокируем запись для других горутин с помощью функции Lock()
 func (c *ConcMap) Store(key string, val int) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -37,12 +41,21 @@ type kv struct {
 }
 
 func main() {
+	// Создаем конкурнтную мапу
 	m := NewConcMap()
+
+	// Подготавливаем набор данных
 	sampleData := []kv{{"SPAS", 12}, {"MAG", 7}, {"Kalak", 12}, {"M", 16}}
+
+	// Канал куда будем писать
 	ch := make(chan kv)
 	
 	wg := &sync.WaitGroup{}
 	
+
+	// В отдельной горутине вызываем другие горутины,
+	// которые слушают один канал и записывают и записывают
+	// данные из него в мапу
 	go func() {
 		for i := 0; i < 3; i++ {
 			wg.Add(1)
@@ -55,13 +68,16 @@ func main() {
 		}
 	}()
 
+	// Пишем в канал данные
 	for _, v := range sampleData {
 		ch <- v
 	}
 
+	// Закрываем канал и жедм пока все горутины отработают
 	close(ch)
 	wg.Wait()
 
+	// Просто вывод
 	for k := range m.m {
 		fmt.Print(k, " ")
 		fmt.Println(m.Load(k))

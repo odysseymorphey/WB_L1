@@ -11,6 +11,7 @@ type array struct {
 	mu sync.Mutex
 }
 
+// Здесь используются те же приемы, что и во втором задании
 func main() {
 	arr := array{
 		data: []int{2, 4, 6, 8, 10},
